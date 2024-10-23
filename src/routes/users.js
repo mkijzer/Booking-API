@@ -1,6 +1,7 @@
 import express from "express";
 import getUsers from "../services/users/getUsers.js";
 import getUserById from "../services/users/getUserById.js";
+import createUser from "../services/users/createUser.js";
 
 const router = express.Router();
 
@@ -32,3 +33,22 @@ router.get("/:id", async (req, res) => {
   }
 });
 export default router;
+
+// CREATE USER
+router.post(
+  "/",
+  // authMiddleware,
+  async (req, res) => {
+    const { username, password, name, email, phoneNumber, pictureUrl } =
+      req.body;
+    const newUser = await createUser(
+      username,
+      password,
+      name,
+      email,
+      phoneNumber,
+      pictureUrl
+    );
+    res.status(201).json(newUser);
+  }
+);
