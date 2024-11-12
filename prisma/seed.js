@@ -17,7 +17,7 @@ async function main() {
   const { amenities } = amenityData;
   const { hosts } = hostData;
 
-  //Users
+  // Insert Users
   for (const user of users) {
     await prisma.user.upsert({
       where: { id: user.id },
@@ -26,34 +26,16 @@ async function main() {
     });
   }
 
-  //Properties
-  for (const property of properties) {
-    await prisma.property.upsert({
-      where: { id: property.id },
+  // Insert Hosts
+  for (const host of hosts) {
+    await prisma.host.upsert({
+      where: { id: host.id },
       update: {},
-      create: property,
+      create: host,
     });
   }
 
-  //Bookings
-  for (const booking of bookings) {
-    await prisma.booking.upsert({
-      where: { id: booking.id },
-      update: {},
-      create: booking,
-    });
-  }
-
-  //Reviews
-  for (const review of reviews) {
-    await prisma.review.upsert({
-      where: { id: review.id },
-      update: {},
-      create: review,
-    });
-  }
-
-  //Amenities
+  // Insert Amenities
   for (const amenity of amenities) {
     await prisma.amenity.upsert({
       where: { id: amenity.id },
@@ -62,12 +44,37 @@ async function main() {
     });
   }
 
-  //Hosts
-  for (const host of hosts) {
-    await prisma.host.upsert({
-      where: { id: host.id },
+  // Insert Properties and Connect Amenities
+  for (const property of properties) {
+    await prisma.property.upsert({
+      where: { id: property.id },
       update: {},
-      create: host,
+      create: {
+        ...property,
+        amenities: {
+          connect: property.amenities
+            ? property.amenities.map((amenityId) => ({ id: amenityId }))
+            : [],
+        },
+      },
+    });
+  }
+
+  // Insert Bookings
+  for (const booking of bookings) {
+    await prisma.booking.upsert({
+      where: { id: booking.id },
+      update: {},
+      create: booking,
+    });
+  }
+
+  // Insert Reviews
+  for (const review of reviews) {
+    await prisma.review.upsert({
+      where: { id: review.id },
+      update: {},
+      create: review,
     });
   }
 }

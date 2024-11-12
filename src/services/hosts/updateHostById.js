@@ -1,38 +1,17 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-const updateHostById = async (
-  id,
-  username,
-  password,
-  name,
-  email,
-  phoneNumber,
-  profilePicture,
-  aboutMe
-) => {
-  const updatedHost = await prisma.host.updateMany({
-    where: {
-      id,
-    },
-    data: {
-      username,
-      password,
-      name,
-      email,
-      phoneNumber,
-      profilePicture,
-      aboutMe,
-    },
+const updateHostById = async (id, updateData) => {
+  const updatedHost = await prisma.host.update({
+    where: { id },
+    data: updateData,
   });
 
-  if (!updatedHost || updatedHost.count === 0) {
+  if (!updatedHost) {
     throw new Error(`Host with id ${id} not found`);
   }
 
-  return {
-    message: `Host with id ${id} was updated!`,
-  };
+  return updatedHost;
 };
 
 export default updateHostById;

@@ -5,28 +5,26 @@ import createUser from "../services/users/createUser.js";
 import updateUserById from "../services/users/updateUserById.js";
 import deleteUser from "../services/users/deleteUser.js";
 import notFoundErrorHandler from "../middleware/notFoundErrorHandler.js";
+import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
 
-// GET ALL USERS
-router.get("/", async (req, res) => {
+// GET all users
+router.get("/", async (req, res, next) => {
   try {
-    const users = await getUsers();
+    const { username, email } = req.query;
+    const users = await getUsers({ username, email });
     res.status(200).json(users);
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .send("Something went wrong while retrieving all the users.");
+    next(error);
   }
 });
 
-// GET USER BY ID
+// GET user by ID
 router.get("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     const user = await getUserById(id);
-
     if (!user) {
       return res.status(404).send(`User with id ${id} not found`);
     }
@@ -36,10 +34,10 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
-// CREATE USER
-router.post("/", async (req, res, next) => {
+// CREATE user
+router.post("/", authMiddleware, async (req, res, next) => {
   try {
-    const { username, password, name, email, phoneNumber, pictureUrl } =
+    const { username, password, name, email, phoneNumber, profilePicture } =
       req.body;
     const newUser = await createUser(
       username,
@@ -47,7 +45,7 @@ router.post("/", async (req, res, next) => {
       name,
       email,
       phoneNumber,
-      pictureUrl
+      profilePicture
     );
     res.status(201).json(newUser);
   } catch (error) {
@@ -55,8 +53,8 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-// EDIT USER
-router.put("/:id", async (req, res, next) => {
+// EDIT user
+router.put("/:id", authMiddleware, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { username, password, name, email, phoneNumber, profilePicture } =
@@ -77,28 +75,17 @@ router.put("/:id", async (req, res, next) => {
   }
 });
 
-// DELETE USER
-router.delete(
-  "/:id",
-  // authMiddleware,
-  async (req, res, next) => {
-    try {
-      const { id } = req.params;
-      const deletedUser = await deleteUser(id); // Renamed the variable here
-
-      if (!deletedUser) {
-        // If deletion fails, send 404 with message
-        throw new Error(`User with id ${id} was not found`);
-      }
-
-      res.status(200).json({
-        message: `User with id ${id} was deleted!`, // Using `id` directly here for clarity
-      });
-    } catch (error) {
-      next(error); // Pass the error to error-handling middleware
-    }
-  },
-  notFoundErrorHandler
-);
+// DELETE user
+router.delete("/:id", authMiddleware, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    await deleteUser(id);
+    res.status(200).json({
+      message: `User with id ${id} was deleted!`,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 export default router;

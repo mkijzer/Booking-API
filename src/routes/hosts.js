@@ -1,43 +1,39 @@
 import express from "express";
+import { PrismaClient } from "@prisma/client";
 import getHosts from "../services/hosts/getHosts.js";
 import getHostById from "../services/hosts/getHostById.js";
 import createHost from "../services/hosts/createHost.js";
 import updateHostById from "../services/hosts/updateHostById.js";
 import deleteHost from "../services/hosts/deleteHost.js";
-import notFoundErrorHandler from "../middleware/NotFoundErrorHandler.js";
+import authMiddleware from "../middleware/auth.js";
 
+const prisma = new PrismaClient();
 const router = express.Router();
 
-// GET ALL HOSTS
+// GET HOSTS
 router.get("/", async (req, res) => {
   try {
-    const hosts = await getHosts();
+    const { name } = req.query;
+    const hosts = await getHosts({ name });
     res.status(200).json(hosts);
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .send("Something went wrong while retrieving all the hosts.");
+    res.status(500).send("Something went wrong while retrieving hosts.");
   }
 });
 
-// GET HOST BY ID
-router.get("/:id", async (req, res, next) => {
+// GET HOST BY ID - Public Route
+router.get("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
-    const host = await getHostById(id);
-
-    if (!host) {
-      return res.status(404).send(`Host with id ${id} not found`);
-    }
+    const host = await getHostById(req.params.id);
     res.status(200).json(host);
   } catch (error) {
-    next(error);
+    res.status(404).send(`Host with id ${req.params.id} not found.`);
   }
 });
 
-// CREATE HOST
-router.post("/", async (req, res, next) => {
+// CREATE HOST - Protected Route
+router.post("/", authMiddleware, async (req, res) => {
   try {
     const {
       username,
@@ -48,71 +44,45 @@ router.post("/", async (req, res, next) => {
       profilePicture,
       aboutMe,
     } = req.body;
-    const newHost = await createHost(
-      username,
-      password,
-      name,
-      email,
-      phoneNumber,
-      profilePicture,
-      aboutMe
-    );
+
+    const newHost = await prisma.host.create({
+      data: {
+        username,
+        password,
+        name,
+        email,
+        phoneNumber,
+        profilePicture,
+        aboutMe,
+      },
+    });
+
     res.status(201).json(newHost);
   } catch (error) {
-    next(error);
+    console.error(error);
+    res.status(500).send("Failed to create a new host.");
   }
 });
 
-// EDIT HOST
-router.put("/:id", async (req, res, next) => {
+// UPDATE HOST BY ID - Protected Route
+router.put("/:id", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      username,
-      password,
-      name,
-      email,
-      phoneNumber,
-      profilePicture,
-      aboutMe,
-    } = req.body;
-
-    const updatedHost = await updateHostById(
-      id,
-      username,
-      password,
-      name,
-      email,
-      phoneNumber,
-      profilePicture,
-      aboutMe
-    );
+    const updatedHost = await updateHostById(id, req.body);
     res.status(200).json(updatedHost);
   } catch (error) {
-    next(error);
+    res.status(404).send(`Host with id ${id} not found.`);
   }
 });
 
-// DELETE HOST
-router.delete(
-  "/:id",
-  async (req, res, next) => {
-    try {
-      const { id } = req.params;
-      const deletedHost = await deleteHost(id);
-
-      if (!deletedHost) {
-        throw new Error(`Host with id ${id} was not found`);
-      }
-
-      res.status(200).json({
-        message: `Host with id ${id} was deleted!`,
-      });
-    } catch (error) {
-      next(error);
-    }
-  },
-  notFoundErrorHandler
-);
+// DELETE HOST BY ID - Protected Route
+router.delete("/:id", authMiddleware, async (req, res) => {
+  try {
+    await deleteHost(req.params.id);
+    res.status(200).send(`Host with id ${req.params.id} deleted.`);
+  } catch (error) {
+    res.status(404).send(`Host with id ${req.params.id} not found.`);
+  }
+});
 
 export default router;
