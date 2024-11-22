@@ -22,7 +22,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET HOST BY ID - Public Route
+// GET HOST BY ID
 router.get("/:id", async (req, res) => {
   try {
     const host = await getHostById(req.params.id);
@@ -32,8 +32,8 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// CREATE HOST - Protected Route
-router.post("/", authMiddleware, async (req, res) => {
+// CREATE HOST
+router.post("/", authMiddleware, async (req, res, next) => {
   try {
     const {
       username,
@@ -44,44 +44,66 @@ router.post("/", authMiddleware, async (req, res) => {
       profilePicture,
       aboutMe,
     } = req.body;
-
-    const newHost = await prisma.host.create({
-      data: {
-        username,
-        password,
-        name,
-        email,
-        phoneNumber,
-        profilePicture,
-        aboutMe,
-      },
+    const existingHost = await prisma.host.findFirst({
+      where: { OR: [{ username }, { email }] },
     });
 
+    if (existingHost) {
+      return res.status(201).json(existingHost);
+    }
+
+    const newHost = await createHost(
+      username,
+      password,
+      name,
+      email,
+      phoneNumber,
+      profilePicture,
+      aboutMe
+    );
     res.status(201).json(newHost);
   } catch (error) {
-    console.error(error);
-    res.status(500).send("Failed to create a new host.");
+    next(error);
   }
 });
 
-// UPDATE HOST BY ID - Protected Route
-router.put("/:id", authMiddleware, async (req, res) => {
+// UPDATE HOST BY ID
+router.put("/:id", authMiddleware, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const updatedHost = await updateHostById(id, req.body);
+    const {
+      username,
+      password,
+      name,
+      email,
+      phoneNumber,
+      profilePicture,
+      aboutMe,
+    } = req.body;
+
+    const updatedHost = await updateHostById(
+      id,
+      username,
+      password,
+      name,
+      email,
+      phoneNumber,
+      profilePicture,
+      aboutMe
+    );
     res.status(200).json(updatedHost);
   } catch (error) {
-    res.status(404).send(`Host with id ${id} not found.`);
+    next(error);
   }
 });
 
-// DELETE HOST BY ID - Protected Route
+// DELETE HOST BY ID
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     await deleteHost(req.params.id);
     res.status(200).send(`Host with id ${req.params.id} deleted.`);
   } catch (error) {
-    res.status(404).send(`Host with id ${req.params.id} not found.`);
+    res.status(404).send(error.message);
   }
 });
 

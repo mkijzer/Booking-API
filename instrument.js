@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/node";
-import "dotenv/config"; // Make sure to import dotenv if not done already
+import "dotenv/config";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,

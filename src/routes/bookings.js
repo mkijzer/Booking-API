@@ -4,7 +4,6 @@ import getBookingById from "../services/bookings/getBookingById.js";
 import createBooking from "../services/bookings/createBooking.js";
 import updateBookingById from "../services/bookings/updateBookingById.js";
 import deleteBooking from "../services/bookings/deleteBooking.js";
-import notFoundErrorHandler from "../middleware/notFoundErrorHandler.js";
 import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
@@ -68,18 +67,15 @@ router.put("/:id", authMiddleware, async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
-      userId,
-      propertyId,
       checkinDate,
       checkoutDate,
       numberOfGuests,
       totalPrice,
       bookingStatus,
     } = req.body;
+
     const updatedBooking = await updateBookingById(
       id,
-      userId,
-      propertyId,
       checkinDate,
       checkoutDate,
       numberOfGuests,

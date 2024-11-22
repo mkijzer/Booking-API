@@ -71,35 +71,10 @@ router.post("/", authMiddleware, async (req, res, next) => {
   }
 });
 
-// PUT route to update a property
 router.put("/:id", authMiddleware, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const {
-      hostId,
-      title,
-      description,
-      location,
-      pricePerNight,
-      bedroomCount,
-      bathRoomCount,
-      maxGuestCount,
-      rating,
-    } = req.body;
-
-    const updatedProperty = await updatePropertyById(
-      id,
-      hostId,
-      title,
-      description,
-      location,
-      pricePerNight,
-      bedroomCount,
-      bathRoomCount,
-      maxGuestCount,
-      rating
-    );
-
+    const updatedProperty = await updatePropertyById(id, req.body);
     res.status(200).json(updatedProperty);
   } catch (error) {
     next(error);

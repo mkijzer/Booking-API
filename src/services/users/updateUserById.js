@@ -1,6 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import notFoundErrorHandler from "../../middleware/notFoundErrorHandler.js";
-
 const prisma = new PrismaClient();
 
 const updateUserById = async (
@@ -12,27 +10,17 @@ const updateUserById = async (
   phoneNumber,
   profilePicture
 ) => {
-  const updatedUser = await prisma.user.updateMany({
-    where: {
-      id,
-    },
-    data: {
-      username,
-      password,
-      name,
-      email,
-      phoneNumber,
-      profilePicture,
-    },
-  });
-
-  if (!updatedUser || updatedUser.count === 0) {
-    throw new notFoundErrorHandler("User", id);
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) {
+    throw new Error(`User with ID ${id} not found`);
   }
 
-  return {
-    message: `User with id ${id} was updated!`,
-  };
+  const updatedUser = await prisma.user.update({
+    where: { id },
+    data: { username, password, name, email, phoneNumber, profilePicture },
+  });
+
+  return { message: `User with id ${id} was updated!`, user: updatedUser };
 };
 
 export default updateUserById;

@@ -1,17 +1,35 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-const updateHostById = async (id, updateData) => {
-  const updatedHost = await prisma.host.update({
-    where: { id },
-    data: updateData,
-  });
-
-  if (!updatedHost) {
-    throw new Error(`Host with id ${id} not found`);
+const updateHostById = async (
+  id,
+  username,
+  password,
+  name,
+  email,
+  phoneNumber,
+  profilePicture,
+  aboutMe
+) => {
+  const host = await prisma.host.findUnique({ where: { id } });
+  if (!host) {
+    throw new Error(`Host with ID ${id} not found`);
   }
 
-  return updatedHost;
+  const updatedHost = await prisma.host.update({
+    where: { id },
+    data: {
+      username,
+      password,
+      name,
+      email,
+      phoneNumber,
+      profilePicture,
+      aboutMe,
+    },
+  });
+
+  return { message: `Host with id ${id} was updated!`, host: updatedHost };
 };
 
 export default updateHostById;

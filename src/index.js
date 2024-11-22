@@ -1,6 +1,6 @@
 import "dotenv/config";
 import express from "express";
-import * as Sentry from "@sentry/node"; // Step 2: Import Sentry
+import * as Sentry from "@sentry/node";
 import loginRouter from "./routes/login.js";
 import usersRouter from "./routes/users.js";
 import hostsRouter from "./routes/hosts.js";

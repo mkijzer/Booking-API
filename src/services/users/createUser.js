@@ -9,25 +9,21 @@ const createUser = async (
   phoneNumber,
   profilePicture
 ) => {
-  console.log("Creating user with:", {
-    username,
-    password,
-    name,
-    email,
-    phoneNumber,
-    profilePicture,
+  if (!username || !password || !email) {
+    const error = new Error("Username, password, and email are required");
+    error.status = 400;
+    throw error;
+  }
+
+  const existingUser = await prisma.user.findFirst({
+    where: { OR: [{ username }, { email }] },
   });
 
-  if (!username || !password || !email) {
-    throw new Error("Username, password, and email are required");
-  }
-
-  const existingUser = await prisma.user.findUnique({ where: { username } });
   if (existingUser) {
-    throw new Error("Username already exists");
+    return existingUser;
   }
 
-  return prisma.user.create({
+  return await prisma.user.create({
     data: {
       username,
       password,

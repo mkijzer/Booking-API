@@ -3,29 +3,24 @@ const prisma = new PrismaClient();
 
 const updateBookingById = async (
   id,
-  userId,
-  propertyId,
   checkinDate,
   checkoutDate,
   numberOfGuests,
   totalPrice,
   bookingStatus
 ) => {
-  // Check if the booking exists
-  const bookingExists = await prisma.booking.findUnique({
+  const existingBooking = await prisma.booking.findUnique({
     where: { id },
   });
 
-  if (!bookingExists) {
+  if (!existingBooking) {
     throw new Error(`Booking with id ${id} not found`);
   }
 
-  // Update the booking details
-  const updatedBooking = await prisma.booking.update({
+  return await prisma.booking.update({
     where: { id },
     data: {
-      userId,
-      propertyId,
+      ...existingBooking,
       checkinDate,
       checkoutDate,
       numberOfGuests,
@@ -33,11 +28,6 @@ const updateBookingById = async (
       bookingStatus,
     },
   });
-
-  return {
-    message: `Booking with id ${id} was updated!`,
-    updatedBooking,
-  };
 };
 
 export default updateBookingById;

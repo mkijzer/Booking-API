@@ -49,8 +49,9 @@ router.post("/", authMiddleware, async (req, res, next) => {
 router.put("/:id", authMiddleware, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, description } = req.body;
-    const updatedAmenity = await updateAmenityById(id, name, description);
+    const { name } = req.body;
+
+    const updatedAmenity = await updateAmenityById(id, name);
     res.status(200).json(updatedAmenity);
   } catch (error) {
     next(error);
